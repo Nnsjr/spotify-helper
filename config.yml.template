@@ -1,0 +1,14 @@
+# Auth
+APP_CLIENT_ID: 
+APP_CLIENT_SECRET: 
+OAUTH_CLIENT_HOST: "127.0.0.1" 
+OAUTH_CLIENT_PORT: "7000"
+SCOPE:
+    - playlist-modify-public
+    - playlist-modify-private
+    - playlist-read-private
+    - playlist-read-collaborative
+    - user-library-read
+
+# Playlists
+ALL_POOL: "spotify:playlist:0byMY4SsVvfziiHcMdvFx9"
