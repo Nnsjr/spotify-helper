@@ -11,4 +11,7 @@ SCOPE:
     - user-library-read
 
 # Playlists
-ALL_POOL: "spotify:playlist:0byMY4SsVvfziiHcMdvFx9"
+ALL_POOL: 
+
+# Members
+MEMBERS:

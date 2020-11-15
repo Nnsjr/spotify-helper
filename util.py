@@ -1,5 +1,6 @@
 import re
 import shelve
+from base64 import b64encode
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -30,16 +31,30 @@ def id_from_uri(resource):
     """
     return resource.split(':')[-1]
 
+
 def is_uri(resource):
     """ Check resource is in uri format.
     """
     return bool(re.match(r"^(\w+):(\w+):([0-9a-zA-Z])+$", resource))
 
 
+def chunk_gen(seq, size=100):
+    for pos in range(0, len(seq), size):
+        yield(seq[pos:pos + size])
+
+
 class AuthClient():
     """ AuthClient facilitates oauth access_token retrieving and refreshing.
         Use AuthClient().get_auth_header() to retrieve header for Http header.
     """
+
+    @property
+    def _get_authorization_header(self):
+        login = "{}:{}".format(config['APP_CLIENT_ID'],
+                               config['APP_CLIENT_SECRET']).encode('ascii')
+        return {
+            "Authorization": "Basic %s" % b64encode(login).decode('utf-8')
+        }
 
     def _handle_token_response(self, token_response):
         """ Handle access_token and refresh access_token response and save
@@ -87,14 +102,13 @@ class AuthClient():
             auth_code = request.args.get('code')
 
             token_request_body = {
-                'client_id': config['APP_CLIENT_ID'],
-                'client_secret': config['APP_CLIENT_SECRET'],
                 'grant_type': "authorization_code",
                 'code': auth_code,
                 'redirect_uri': redirect_uri
             }
             token_response = session.post(
-                get_url('token'), data=token_request_body)
+                get_url('token'), data=token_request_body,
+                headers=self._get_authorization_header)
             self._handle_token_response(token_response)
             self.token['scope'] = set(config['SCOPE'])
             shutdown = request.environ.get('werkzeug.server.shutdown')
@@ -112,10 +126,10 @@ class AuthClient():
         token_request_body = {
             'grant_type': "refresh_token",
             'refresh_token': self.token['refresh_token'],
-            'client_id': config['APP_CLIENT_ID'],
         }
         token_response = session.post(
-            get_url('token'), data=token_request_body)
+            get_url('token'), data=token_request_body,
+            headers=self._get_authorization_header)
         self._handle_token_response(token_response)
 
     def _auth_flow(self, session):
@@ -172,6 +186,32 @@ class SpotifyClient():
             results.extend(resp['items'])
             url = resp.get('next')
         return results
+
+    def get_playlist_id(self, playlist):
+        # If in URI format
+        if is_uri(playlist):
+            playlist_id = id_from_uri(playlist)
+        # If in name format
+        else:
+            all_playlists = self.paginate_through(get_url('playlists'))
+            matched = next(
+                filter(lambda p: playlist in p['name'], all_playlists), {})
+            playlist_id = matched.get('id')
+        if not playlist_id:
+            raise ValueError("No matching playlist found.")
+        return playlist_id
+
+    def all_tracks_in_playlist(self, playlist_id):
+        return self.paginate_through(
+            get_url('tracks', playlist_id=playlist_id),
+            params={'offset': 0, 'limit': 100})
+
+    def add_tracks_to_playlist(self, tracks, playlist_id):
+        for chunk in chunk_gen(tracks):
+            self.handle_request(
+                self.client.post,
+                get_url('tracks', playlist_id=playlist_id),
+                params={'uris': ','.join(chunk)})
 
     def __init__(self):
         self.client = requests.Session()
