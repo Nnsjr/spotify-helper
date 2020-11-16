@@ -1,10 +1,14 @@
 import re
 import shelve
+import os.path
 from base64 import b64encode
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from uuid import uuid4
 
+from bs4 import BeautifulSoup
+import browser_cookie3
 import requests
 from flask import Flask, redirect, request
 
@@ -17,6 +21,13 @@ URLS = {
     'playlist': 'https://api.spotify.com/v1/playlists/{playlist_id}',
     'tracks': 'https://api.spotify.com/v1/playlists/{playlist_id}/tracks',
 }
+MUSIC_LEAGUE_DOMAIN = 'musicleague.app'
+
+
+def remove_prefix(text, prefix):
+    if text.lower().startswith(prefix.lower()):
+        return text[len(prefix):]
+    return text
 
 
 def get_url(endpoint, **kwargs):
@@ -43,7 +54,7 @@ def chunk_gen(seq, size=100):
         yield(seq[pos:pos + size])
 
 
-class AuthClient():
+class AuthClient:
     """ AuthClient facilitates oauth access_token retrieving and refreshing.
         Use AuthClient().get_auth_header() to retrieve header for Http header.
     """
@@ -65,7 +76,9 @@ class AuthClient():
 
         token_response = token_response.json()
         self.token['access_token'] = token_response['access_token']
-        self.token['refresh_token'] = token_response['refresh_token']
+        self.token['scope'] = set(token_response['scope'].split(' '))
+        if 'refresh_token' in token_response:
+            self.token['refresh_token'] = token_response['refresh_token']
         expires_in = token_response['expires_in']
         self.token['expiry'] = datetime.now() + timedelta(seconds=expires_in)
 
@@ -110,7 +123,6 @@ class AuthClient():
                 get_url('token'), data=token_request_body,
                 headers=self._get_authorization_header)
             self._handle_token_response(token_response)
-            self.token['scope'] = set(config['SCOPE'])
             shutdown = request.environ.get('werkzeug.server.shutdown')
             if not shutdown:
                 raise RuntimeError("Access code succesfully retrieved.")
@@ -152,8 +164,7 @@ class AuthClient():
             self.token = shelve.open('oauth2_token.db', writeback=True)
             auth_session = requests.Session()
             auth_session.session_id = uuid4().hex
-            if (not self.token.get('access_token')
-                    or self.token.get('scope') != set(config['SCOPE'])):
+            if not self.token.get('access_token'):
                 self._auth_flow(auth_session)
             elif self.token.get('expiry') <= datetime.now():
                 self._refresh_access_token(auth_session)
@@ -163,7 +174,7 @@ class AuthClient():
             delattr(self, 'token')
 
 
-class SpotifyClient():
+class SpotifyClient:
     def handle_request(self, method, *args, **kwargs):
         """ Handles HTTP response erros.
             TODO: Better handler
@@ -216,3 +227,97 @@ class SpotifyClient():
     def __init__(self):
         self.client = requests.Session()
         self.client.headers = AuthClient().get_auth_header()
+
+
+@dataclass
+class MLTrack:
+    name: str
+    img_url: str
+    link: str
+    artist: str
+    submitted_by: str
+    comments: dict
+    upvotes: list
+
+    @property
+    def score(self):
+        return sum(self.upvotes.values())
+
+    @property
+    def spotify_id(self):
+        return os.path.split(urlparse(self.link).path)[1]
+
+    @property
+    def spotify_uri(self):
+        return f"spotify:track:{self.spotify_id}"
+
+
+@dataclass
+class MLRound:
+    title: str
+    tracks: list
+
+    @property
+    def round_result(self):
+        result = {}
+        for t in self.tracks:
+            result[t.submitted_by] = result.get(t.submitted_by, 0) + t.score
+        return sorted(result.items(), lambda x: x[1], reverse=True)
+
+
+class MusicLeagueClient:
+
+    @staticmethod
+    def _extract_classes_string(parent, *names):
+        return [parent.find(class_=n).string for n in names]
+
+    def parse_round(self, url):
+        resp = self.ml_session.get(url)
+        if not resp.ok:
+            raise ValueError(resp.text)
+        bs = BeautifulSoup(resp.text, 'html.parser')
+
+        title = bs.find(class_="round-title").string
+
+        tracks = []
+        track_doms = bs.find_all(class_="song")
+        for track_dom in track_doms:
+            song_info = track_dom.find(class_="song-info")
+            img_url = track_dom.img['src']
+            name, artist, submitted_by = (
+                self._extract_classes_string(
+                    song_info, "name", "artist", "submitter"))
+            link = song_info.find(class_="name")['href']
+            submitted_by = remove_prefix(submitted_by, "submitted by ")
+            artist = remove_prefix(artist, "by ")
+
+            comment_doms = track_dom.find_all(class_="comment")
+            comments = {}
+            for comment_dom in comment_doms:
+                commenter = remove_prefix(
+                    comment_dom.find(class_="commenter").string, "- ")
+                comment = comment_dom.next_element
+                comments[commenter] = comment
+
+            upvote_doms = track_dom.find_all(class_="upvote")
+            upvotes = {}
+            for upvote in upvote_doms:
+                score, voter = self._extract_classes_string(
+                    upvote, "vote-count", "voter")
+                score = int(score)
+                upvotes[voter] = score
+
+            track = MLTrack(
+                name=name, img_url=img_url, submitted_by=submitted_by,
+                link=link, artist=artist, comments=comments, upvotes=upvotes)
+            tracks.append(track)
+
+        return MLRound(title=title, tracks=tracks)
+
+    def __init__(self):
+        browser_name = config['BROWSER_NAME'].lower()
+        cookie_reader = getattr(browser_cookie3, browser_name)
+        cookies = cookie_reader(domain_name=MUSIC_LEAGUE_DOMAIN)
+
+        self.ml_session = requests.Session()
+        self.ml_session.cookies = cookies

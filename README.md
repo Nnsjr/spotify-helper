@@ -11,6 +11,15 @@
 ## Usage
 
 ### Check Duplication
+Check whether a playlist have duplication against the pool.
+
 * `python check_dup.py --help`
 * `python check_dup.py {playlist_name}`
 * `python check_dup.py {playlist_uri}`
+
+### Archive 
+Archive a spotify playlist or a music league round to each members archive and
+the pool as well.
+
+* `python archive_playlist {playlist_uri}`
+* `python archive_playlist {music_league_round_url}`

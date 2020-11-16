@@ -1,3 +1,6 @@
+# General
+BROWSER_NAME: chrome
+
 # Auth
 APP_CLIENT_ID: 
 APP_CLIENT_SECRET: 
@@ -15,3 +18,14 @@ ALL_POOL:
 
 # Members
 MEMBERS:
+    - name:
+      nick_name:
+      uri
+      archive_uri:
+      ml_handle: 秦睿謙
+      
+    - name:
+      nick_name:
+      uri:
+      archive_uri:
+      ml_handle: 秦睿謙
