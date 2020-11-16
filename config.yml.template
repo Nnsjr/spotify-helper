@@ -19,13 +19,13 @@ ALL_POOL:
 # Members
 MEMBERS:
     - name:
-      nick_name:
+      nickname:
       uri
       archive_uri:
       ml_handle:       
 
     - name:
-      nick_name:
+      nickname:
       uri:
       archive_uri:
       ml_handle: 

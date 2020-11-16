@@ -21,5 +21,10 @@ Check whether a playlist have duplication against the pool.
 Archive a spotify playlist or a music league round to each members archive and
 the pool as well.
 
-* `python archive_playlist {playlist_uri}`
-* `python archive_playlist {music_league_round_url}`
+* `python archive_playlist.py {playlist_uri}`
+* `python archive_playlist.py {music_league_round_url}`
+
+### Round Result
+Show round result by summing the votes.
+
+* `python round_result.py {music_league_round_url}`

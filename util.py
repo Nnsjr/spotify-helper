@@ -262,7 +262,7 @@ class MLRound:
         result = {}
         for t in self.tracks:
             result[t.submitted_by] = result.get(t.submitted_by, 0) + t.score
-        return sorted(result.items(), lambda x: x[1], reverse=True)
+        return sorted(result.items(), key=lambda x: x[1], reverse=True)
 
 
 class MusicLeagueClient:
