@@ -53,8 +53,6 @@ def archive_playlist(playlist):
             archive_to = archive_map[added_by]
             archiving_tracks.setdefault(archive_to, []).append(track_uri)
 
-    import ipdb; ipdb.set_trace()
-
     # Add tracks to each member's archive
     for archive_id, _tracks in archiving_tracks.items():
         spotify_client.add_tracks_to_playlist(_tracks, archive_id)
