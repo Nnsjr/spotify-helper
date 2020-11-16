@@ -7,6 +7,8 @@
 
 ## Authentication
 1. At first run, visit `http://127.0.0.1:7000` to complete Spotify auth.
+2. Music league parser uses your browser's cookie to workaround with sessions
+make sure you never click always allow when granting access to python.
 
 ## Usage
 
