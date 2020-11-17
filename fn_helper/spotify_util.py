@@ -165,12 +165,14 @@ class SpotifyClient:
             params = {'limit': 50}
         while url:
             resp = self.handle_request(
-                self.client.get, url, params=params)
+                self.spotify_session.get, url, params=params)
             results.extend(resp['items'])
             url = resp.get('next')
         return results
 
     def get_playlist_id(self, playlist):
+        """ Retrieve a playlist by its URI or its name
+        """
         # If in URI format
         if is_uri(playlist):
             playlist_id = id_from_uri(playlist)
@@ -192,10 +194,10 @@ class SpotifyClient:
     def add_tracks_to_playlist(self, tracks, playlist_id):
         for chunk in chunk_gen(tracks):
             self.handle_request(
-                self.client.post,
+                self.spotify_session.post,
                 get_url('tracks', playlist_id=playlist_id),
                 params={'uris': ','.join(chunk)})
 
     def __init__(self):
-        self.client = requests.Session()
-        self.client.headers = SpotifyAuthClient().get_auth_header()
+        self.spotify_session = requests.Session()
+        self.spotify_session.headers = SpotifyAuthClient().get_auth_header()
