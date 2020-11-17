@@ -30,8 +30,8 @@ def archive_playlist(playlist):
         archive_map = {m['ml_handle'].lower(): id_from_uri(m['archive_uri'])
                        for m in members if 'ml_handle' in m}
         ml_client = MusicLeagueClient()
-        ml_round = ml_client.parse_round(playlist)
-        for track in ml_round.tracks:
+        ml_round_result = ml_client.parse_round(playlist)
+        for track in ml_round_result.tracks:
             # People that's no longer in the league
             if not track.submitted_by.lower() in archive_map:
                 continue

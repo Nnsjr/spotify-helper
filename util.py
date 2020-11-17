@@ -43,6 +43,10 @@ def id_from_uri(resource):
     return resource.split(':')[-1]
 
 
+def id_from_url(url):
+    return os.path.split(urlparse(url).path)[1]
+
+
 def is_uri(resource):
     """ Check resource is in uri format.
     """
@@ -253,16 +257,29 @@ class MLTrack:
 
 
 @dataclass
-class MLRound:
+class MLRoundResult:
     title: str
     tracks: list
 
     @property
-    def round_result(self):
+    def vote_count(self):
         result = {}
         for t in self.tracks:
             result[t.submitted_by] = result.get(t.submitted_by, 0) + t.score
         return sorted(result.items(), key=lambda x: x[1], reverse=True)
+
+
+@dataclass
+class MLRound:
+    title: str
+    playlist_link: str
+    result: MLRoundResult
+
+
+@dataclass
+class MLLeague:
+    title: str
+    completed_rounds: list
 
 
 class MusicLeagueClient:
@@ -270,6 +287,30 @@ class MusicLeagueClient:
     @staticmethod
     def _extract_classes_string(parent, *names):
         return [parent.find(class_=n).string for n in names]
+
+    def parse_league(self, url=None):
+        if not url:
+            url = f'https://{MUSIC_LEAGUE_DOMAIN}/l/{config["MUSIC_LEAGUE_ID"]}/'  # noqa
+        resp = self.ml_session.get(url)
+        if not resp.ok:
+            raise ValueError(resp.text)
+
+        league_dom = BeautifulSoup(resp.text, 'html.parser')
+        title = league_dom.find(class_="league-title").string
+
+        completed_rounds = []
+        completed_rounds_dom = league_dom.find_all(class_="round-bar complete")
+        for rnd in completed_rounds_dom:
+            round_title = league_dom.find(class_="round-title").string
+            playlist_link = rnd.find(class_="playlist").parent['href']
+            result_link = rnd.find(class_="results").parent['href']
+            completed_rounds.append(
+                MLRound(
+                    title=round_title, playlist_link=playlist_link,
+                    result=self.parse_round(
+                        f'https://{MUSIC_LEAGUE_DOMAIN}{result_link}'))
+            )
+        return MLLeague(title=title, completed_rounds=completed_rounds)
 
     def parse_round(self, url):
         resp = self.ml_session.get(url)
@@ -312,7 +353,7 @@ class MusicLeagueClient:
                 link=link, artist=artist, comments=comments, upvotes=upvotes)
             tracks.append(track)
 
-        return MLRound(title=title, tracks=tracks)
+        return MLRoundResult(title=title, tracks=tracks)
 
     def __init__(self):
         browser_name = config['BROWSER_NAME'].lower()

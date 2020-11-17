@@ -13,12 +13,12 @@ def round_result(round_url):
     nicknames = {m['ml_handle'].lower(): m['nickname']
                  for m in members if 'ml_handle' in m}
     ml_client = MusicLeagueClient()
-    ml_round = ml_client.parse_round(round_url)
+    ml_round_result = ml_client.parse_round(round_url)
 
-    for handle, score in ml_round.round_result:
+    for handle, score in ml_round_result.vote_count:
         print("{} {}".format(nicknames[handle], score))
 
-    winner = ml_round.round_result[0][0]
+    winner = ml_round_result.vote_count[0][0]
     print("WINNER: {}".format(nicknames[winner]))
 
 
