@@ -62,6 +62,7 @@ def archive_playlist(playlist):
     all_track_uris = list(
         itertools.chain.from_iterable(archiving_tracks.values()))
     spotify_client.add_tracks_to_playlist(all_track_uris, pool_playlist_id)
+    print("Archive successfully.")
 
 
 if __name__ == '__main__':

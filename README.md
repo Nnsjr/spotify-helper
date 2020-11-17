@@ -7,11 +7,11 @@
 4. `cp config.yml.template config.yml`
 
 * For Music League helper please fill in Music League members manifest in config.yml
-* For Spotify helper please https://developer.spotify.com/dashboard/applications 
+* For Spotify helper please visit https://developer.spotify.com/dashboard/applications 
 and create an app for yourself. Fill in `CLIENT_ID` and `CLIENT_SECRET` in config.yml
 
 ## Authentication
-1. At first run, visit `http://127.0.0.1:7000` to complete Spotify auth.
+1. At first run, run `python setup.py` and visit `http://127.0.0.1:7000` to complete Spotify auth.
 2. Music league parser uses your browser's cookie to workaround with sessions
 make sure you never click always allow when granting access to python.
 
