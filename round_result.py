@@ -1,7 +1,6 @@
 import click
 
-from config import config
-from util import MusicLeagueClient
+from fn_helper import config, MusicLeagueClient
 
 
 @click.command()
@@ -16,10 +15,10 @@ def round_result(round_url):
     ml_round_result = ml_client.parse_round(round_url)
 
     for handle, score in ml_round_result.vote_count:
-        print("{} {}".format(nicknames[handle], score))
+        print("{} {}".format(nicknames[handle.lower()], score))
 
     winner = ml_round_result.vote_count[0][0]
-    print("WINNER: {}".format(nicknames[winner]))
+    print("WINNER: {}".format(nicknames[winner.lower()]))
 
 
 if __name__ == '__main__':

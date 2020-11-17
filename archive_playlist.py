@@ -3,9 +3,9 @@ from urllib.parse import urlparse
 
 import click
 
-from config import config
-from util import (
-    id_from_uri, MusicLeagueClient, MUSIC_LEAGUE_DOMAIN, SpotifyClient)
+from fn_helper import (
+    config, MusicLeagueClient, MUSIC_LEAGUE_DOMAIN, SpotifyClient)
+from fn_helper.util import id_from_uri
 
 
 def is_music_league_url(playlist):

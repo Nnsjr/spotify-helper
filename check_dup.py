@@ -1,7 +1,7 @@
 import click
 
-from config import config
-from util import id_from_uri, SpotifyClient
+from fn_helper import config, SpotifyClient
+from fn_helper.util import id_from_uri
 
 
 @click.command()
