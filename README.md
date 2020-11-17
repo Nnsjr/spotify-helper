@@ -7,8 +7,11 @@
 4. `cp config.yml.template config.yml`
 
 * For Music League helper please fill in Music League members manifest in config.yml
-* For Spotify helper please visit https://developer.spotify.com/dashboard/applications 
-and create an app for yourself. Fill in `CLIENT_ID` and `CLIENT_SECRET` in config.yml
+* For Spotify helper:
+    1. Visit https://developer.spotify.com/dashboard/applications 
+and create an app for yourself. 
+    2. Edit the setting and fill in the callback whitelist URL to be `127.0.0.1:7000`.
+    3. Fill in `CLIENT_ID` and `CLIENT_SECRET` in `config.yml`.
 
 ## Authentication
 1. At first run, run `python setup.py` and visit `http://127.0.0.1:7000` to complete Spotify auth.
