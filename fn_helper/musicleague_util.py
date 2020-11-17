@@ -80,7 +80,7 @@ class MusicLeagueClient:
         completed_rounds = []
         completed_rounds_dom = league_dom.find_all(class_="round-bar complete")
         for rnd in completed_rounds_dom:
-            round_title = league_dom.find(class_="round-title").string
+            round_title = rnd.find(class_="round-title").string
             playlist_link = rnd.find(class_="playlist").parent['href']
             result_link = rnd.find(class_="results").parent['href']
             completed_rounds.append(
