@@ -1,9 +1,14 @@
 # 肥宅幫手
 
 ## Setup
-1. `pipenv shell`
-2. `pipenv sync`
-3. `cp config.yml.template config.yml`
+1. `pip install pipenv`
+2. `pipenv shell`
+3. `pipenv sync`
+4. `cp config.yml.template config.yml`
+
+* For Music League helper please fill in Music League members manifest in config.yml
+* For Spotify helper please https://developer.spotify.com/dashboard/applications 
+and create an app for yourself. Fill in `CLIENT_ID` and `CLIENT_SECRET` in config.yml
 
 ## Authentication
 1. At first run, visit `http://127.0.0.1:7000` to complete Spotify auth.
