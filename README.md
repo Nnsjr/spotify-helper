@@ -1,10 +1,15 @@
 # 肥宅幫手
 
 ## Setup
+
+### Development
 1. `pip install pipenv`
 2. `pipenv shell`
 3. `pipenv sync`
 4. `cp config.yml.template config.yml`
+
+### Using 
+1. python -r requirements.txt
 
 * For Music League helper please fill in Music League members manifest in config.yml
 * For Spotify helper:
