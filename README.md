@@ -9,8 +9,9 @@
 4. `cp config.yml.template config.yml`
 
 ### Using 
-1. python -r requirements.txt
+In case you don't have python 3.7 for pipenv you could always fallback using `python -r requirements.txt`
 
+### App and config setup
 * For Music League helper please fill in Music League members manifest in config.yml
 * For Spotify helper:
     1. Visit https://developer.spotify.com/dashboard/applications 
