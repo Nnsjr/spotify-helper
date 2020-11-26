@@ -198,6 +198,11 @@ class SpotifyClient:
                 get_url('tracks', playlist_id=playlist_id),
                 params={'uris': ','.join(chunk)})
 
+    def update_playlist_tracks(self, playlist_id, **data):
+        return self.handle_request(
+            self.spotify_session.put,
+            get_url('tracks', playlist_id=playlist_id), json=data)
+
     def __init__(self):
         self.spotify_session = requests.Session()
         self.spotify_session.headers = SpotifyAuthClient().get_auth_header()
