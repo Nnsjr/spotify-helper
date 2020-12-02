@@ -5,6 +5,23 @@ from fn_helper import SpotifyClient
 from archives import all_recipes
 
 
+def track_to_tags_filter(source, track_filter, results):
+    for track in source.tracks:
+        result = track_filter(track, source)
+        if result:
+            if not isinstance(result, list):
+                result = [result]
+            for tag in result:
+                results.setdefault(
+                    tag, []).append(track.spotify_uri)
+    return results
+
+
+def track_keep_filter(source, track_filter, results):
+    return results + [t.spotify_uri for t in source.tracks
+                      if track_filter(t, source)]
+
+
 @click.command()
 def archive_playlists():
     spotify_client = SpotifyClient()
@@ -19,17 +36,15 @@ def archive_playlists():
             checkpoint = (checkpoints.get(recipe_name)
                           or getattr(recipe, 'initial_checkpoint', None))
             recipe.source.move_to_checkpoint(checkpoint)
-            source = next(recipe.source)
             if isinstance(recipe.target, dict):
                 results = {}
-                for track in source.tracks:
-                    result = recipe.track_filter(track, source)
-                    if result:
-                        if not isinstance(result, list):
-                            result = [result]
-                        for tag in result:
-                            results.setdefault(
-                                tag, []).append(track.spotify_uri)
+                try:
+                    while True:
+                        source = next(recipe.source)
+                        results = track_to_tags_filter(
+                            source, recipe.track_filter, results)
+                except StopIteration:
+                    pass
 
                 for tag, track_uris in results.items():
                     if tag not in recipe.target:
@@ -37,10 +52,16 @@ def archive_playlists():
                     spotify_client.add_tracks_to_playlist(
                         track_uris, recipe.target[tag])
             else:
-                track_uris = [t.spotify_uri for t in source.tracks
-                              if recipe.track_filter(t, source)]
+                results = []
+                try:
+                    while True:
+                        source = next(recipe.source)
+                        results = track_keep_filter(
+                            source, recipe.track_filter, results)
+                except StopIteration:
+                    pass
                 spotify_client.add_tracks_to_playlist(
-                    track_uris, recipe.target)
+                    results, recipe.target)
 
             checkpoints[recipe_name] = recipe.sources.checkpoint
         except Exception as e:

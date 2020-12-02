@@ -256,7 +256,7 @@ class SpotifyClient:
             self.handle_request(
                 self.spotify_session.post,
                 get_url('tracks', playlist_id=playlist_id),
-                params={'uris': ','.join(chunk)})
+                json={'uris': chunk})
 
     def update_playlist_tracks(self, playlist_id, **data):
         return self.handle_request(
