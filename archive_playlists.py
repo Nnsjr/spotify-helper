@@ -52,7 +52,7 @@ def archive_playlists():
                 spotify_client.add_tracks_to_playlist(
                     list(chain.from_iterable(results.values())), recipe.target)
 
-            checkpoints[recipe_name] = recipe.sources.checkpoint
+            checkpoints[recipe_name] = recipe.source.checkpoint
         except Exception as e:
             print(e)
             pass
