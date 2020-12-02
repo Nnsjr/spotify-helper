@@ -1,69 +1,52 @@
-import itertools
-from urllib.parse import urlparse
-
 import click
+import shelve
 
-from fn_helper import (
-    config, MusicLeagueClient, MUSIC_LEAGUE_DOMAIN, SpotifyClient)
-from fn_helper.util import id_from_uri
-
-
-def is_music_league_url(playlist):
-    parsed_url = urlparse(playlist)
-    return parsed_url.netloc == MUSIC_LEAGUE_DOMAIN
+from fn_helper import SpotifyClient
+from archives import all_recipes
 
 
 @click.command()
-@click.argument('playlist', nargs=1)
-def archive_playlist(playlist):
-    """ Checks whether the playlist (matched by uri or name substr)
-        has any tracks already in the pool.
-    """
-
+def archive_playlists():
     spotify_client = SpotifyClient()
 
-    members = config['MEMBERS']
-    archiving_tracks = {}
+    checkpoints = shelve.open('archive_checkpoints.db', writeback=True)
 
-    # Is Music League round
-    if is_music_league_url(playlist):
-        archive_map = {m['ml_handle'].lower(): id_from_uri(m['archive_uri'])
-                       for m in members if 'ml_handle' in m}
-        ml_client = MusicLeagueClient()
-        ml_round_result = ml_client.parse_round(playlist)
-        for track in ml_round_result.tracks:
-            # People that's no longer in the league
-            if not track.submitted_by.lower() in archive_map:
-                continue
-            archive_to = archive_map[track.submitted_by.lower()]
-            archiving_tracks.setdefault(
-                archive_to, []).append(track.spotify_uri)
+    for Recipe in all_recipes:
+        try:
+            recipe = Recipe()
+            recipe_name = recipe.name or recipe.__class__.__name__
 
-    # Is Spotify resource
-    else:
-        archive_map = {id_from_uri(m['uri']): id_from_uri(m['archive_uri'])
-                       for m in members}
-        playlist_id = spotify_client.get_playlist_id(playlist)
-        tracks = spotify_client.all_tracks_in_playlist(playlist_id)
+            checkpoint = (checkpoints.get(recipe_name)
+                          or getattr(recipe, 'initial_checkpoint', None))
+            recipe.source.move_to_checkpoint(checkpoint)
+            source = next(recipe.source)
+            if isinstance(recipe.target, dict):
+                results = {}
+                for track in source.tracks:
+                    result = recipe.track_filter(track, source)
+                    if result:
+                        if not isinstance(result, list):
+                            result = [result]
+                        for tag in result:
+                            results.setdefault(
+                                tag, []).append(track.spotify_uri)
 
-        # https://developer.spotify.com/documentation/web-api/reference/playlists/add-tracks-to-playlist/
-        for track in tracks:
-            track_uri = track['track']['uri']
-            added_by = track['added_by']['id']
-            archive_to = archive_map[added_by]
-            archiving_tracks.setdefault(archive_to, []).append(track_uri)
+                for tag, track_uris in results.items():
+                    if tag not in recipe.target:
+                        continue
+                    spotify_client.add_tracks_to_playlist(
+                        track_uris, recipe.target[tag])
+            else:
+                track_uris = [t.spotify_uri for t in source.tracks
+                              if recipe.track_filter(t, source)]
+                spotify_client.add_tracks_to_playlist(
+                    track_uris, recipe.target)
 
-    # Add tracks to each member's archive
-    for archive_id, _tracks in archiving_tracks.items():
-        spotify_client.add_tracks_to_playlist(_tracks, archive_id)
-
-    # Add all tracks to pool archive
-    pool_playlist_id = id_from_uri(config['ALL_POOL'])
-    all_track_uris = list(
-        itertools.chain.from_iterable(archiving_tracks.values()))
-    spotify_client.add_tracks_to_playlist(all_track_uris, pool_playlist_id)
-    print("Archive successfully.")
+            checkpoints[recipe_name] = recipe.sources.checkpoint
+        except Exception as e:
+            print(e)
+            pass
 
 
 if __name__ == '__main__':
-    archive_playlist()
+    archive_playlists()

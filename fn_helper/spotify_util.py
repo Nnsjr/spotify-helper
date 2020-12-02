@@ -1,5 +1,7 @@
+import re
 import shelve
 from base64 import b64encode
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 from uuid import uuid4
@@ -7,7 +9,7 @@ from uuid import uuid4
 import requests
 from flask import Flask, redirect, request
 
-from .util import chunk_gen, id_from_uri, is_uri
+from .util import ElementIterator, chunk_gen, id_from_uri, is_uri
 from .config import config
 
 
@@ -24,6 +26,61 @@ def get_url(endpoint, **kwargs):
     """ Get endpoint url, and format it with ids.
     """
     return URLS[endpoint].format(**kwargs)
+
+
+@dataclass
+class Track:
+    id: str
+    name: str
+    submitted_by: str
+    spotify_uri: str
+    raw_data: dict
+
+
+@dataclass
+class Playlist:
+    id: str
+    name: str
+    _tracks: list
+    raw_data: dict
+
+    @property
+    def tracks(self):
+        if isinstance(self._tracks, list):
+            return self._tracks
+        tracks = self._tracks['parser'](self._tracks['track_url'])
+        return list(map(self.parse_track, tracks))
+
+    def parse_track(self, track):
+        return Track(id=track["track"]["id"],
+                     name=track["track"]["name"],
+                     submitted_by=track["added_by"]["id"],
+                     spotify_uri=track["track"]["uri"],
+                     raw_data=track)
+
+    def __str__(self):
+        return self.name
+
+
+class SpotifyNerdPlaylistIterator(ElementIterator):
+    def __init__(self):
+        matcher = re.compile(r"(\d{1,2}/\d{1,2} ?肥宅聽歌團)")
+        excluder = re.compile(r"[Rr]ound ?\d+")
+        self.spotify_client = SpotifyClient()
+        all_playlists = self.spotify_client.all_playlists()
+        matched = filter(lambda p: matcher.search(p['name']), all_playlists)
+        matched = filter(
+            lambda p: not bool(excluder.search(p['name'])), matched)
+        self.elements = list(map(self.parse_playlist, matched))
+        self.elements.reverse()
+
+    def parse_playlist(self, p):
+        return Playlist(
+            id=p['id'],
+            name=p['name'],
+            _tracks={'parser': self.spotify_client.all_tracks_in_playlist,
+                     'track_url': p['id']},
+            raw_data=p)
 
 
 class SpotifyAuthClient:
@@ -178,13 +235,16 @@ class SpotifyClient:
             playlist_id = id_from_uri(playlist)
         # If in name format
         else:
-            all_playlists = self.paginate_through(get_url('playlists'))
+            all_playlists = self.all_playlists()
             matched = next(
                 filter(lambda p: playlist in p['name'], all_playlists), {})
             playlist_id = matched.get('id')
         if not playlist_id:
             raise ValueError("No matching playlist found.")
         return playlist_id
+
+    def all_playlists(self):
+        return self.paginate_through(get_url('playlists'))
 
     def all_tracks_in_playlist(self, playlist_id):
         return self.paginate_through(

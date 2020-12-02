@@ -29,3 +29,31 @@ def is_uri(resource):
 def chunk_gen(seq, size=100):
     for pos in range(0, len(seq), size):
         yield(seq[pos:pos + size])
+
+
+class ElementIterator:
+    n = 0
+    current_element = None
+    elements = []
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            self.current_element = self.elements[self.n]
+        except IndexError:
+            raise StopIteration()
+        else:
+            self.n += 1
+        return self.current_element
+
+    @property
+    def checkpoint(self):
+        return str(self.current_element)
+
+    def move_to_checkpoint(self, checkpoint):
+        if not checkpoint:
+            return
+        while self.checkpoint != checkpoint:
+            next(self)

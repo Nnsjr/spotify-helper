@@ -1,12 +1,13 @@
 import os.path
 from dataclasses import dataclass
+from typing import Any
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 import browser_cookie3
 import requests
 
-from .util import remove_prefix
+from .util import ElementIterator, remove_prefix
 from .config import config
 
 MUSIC_LEAGUE_DOMAIN = 'musicleague.app'
@@ -52,13 +53,34 @@ class MLRoundResult:
 class MLRound:
     title: str
     playlist_link: str
-    result: MLRoundResult
+    _result: Any
+
+    @property
+    def result(self):
+        """ Lazy result for speed improvement
+        """
+        if not isinstance(self._result, MLRoundResult):
+            self._result = self._result['parser'](self._result['round_url'])
+        return self._result
+
+    @property
+    def tracks(self):
+        return self.result.tracks
+
+    def __str__(self):
+        return self.title
 
 
 @dataclass
 class MLLeague:
     title: str
     completed_rounds: list
+
+
+class MLRoundIterator(ElementIterator):
+    def __init__(self):
+        league_client = MusicLeagueClient()
+        self.elements = league_client.parse_league().completed_rounds
 
 
 class MusicLeagueClient:
@@ -86,8 +108,12 @@ class MusicLeagueClient:
             completed_rounds.append(
                 MLRound(
                     title=round_title, playlist_link=playlist_link,
-                    result=self.parse_round(
-                        f'https://{MUSIC_LEAGUE_DOMAIN}{result_link}'))
+                    _result={
+                        'parser': self.parse_round,
+                        'round_url': (
+                            f'https://{MUSIC_LEAGUE_DOMAIN}{result_link}')
+                    }
+                )
             )
         return MLLeague(title=title, completed_rounds=completed_rounds)
 
