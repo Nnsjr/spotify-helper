@@ -6,6 +6,7 @@ from .base import BaseArchiveRecipe
 
 class MLArchiveRecipe(BaseArchiveRecipe):
     name = "MusicLeague_archiver"
+    active = False
     initial_checkpoint = "11/3肥宅聽歌團 - Round 8 - 我知道你沒聽過，但希望你會喜歡"  # noqa
     source = MLRoundIterator()
     target = {
@@ -19,6 +20,7 @@ class MLArchiveRecipe(BaseArchiveRecipe):
 
 class SpotifyArchiveRecipe(BaseArchiveRecipe):
     name = "Spotify_nerd_archiver"
+    active = False
     initial_checkpoint = "11/06肥宅聽歌團"
     source = SpotifyNerdPlaylistIterator()
     target = {
