@@ -1,5 +1,6 @@
 class BaseArchiveRecipe(object):
     name = None
+    active = False
     initial_checkpoint = None
     source = None
     target = None
