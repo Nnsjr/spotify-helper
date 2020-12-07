@@ -12,15 +12,15 @@
 In case you don't have python 3.7 for pipenv you could always fallback using `python -r requirements.txt`
 
 ### App and config setup
-* For Music League helper please fill in Music League members manifest in config.yml
+* For Music League helper please fill in Music League members manifest in `config.yml`
 * For Spotify helper:
     1. Visit https://developer.spotify.com/dashboard/applications 
 and create an app for yourself. 
-    2. Edit the setting and fill in the callback whitelist URL to be `127.0.0.1:7000`.
+    2. Edit the setting and fill in the callback whitelist URL to be `http://127.0.0.1:7000/callback`.
     3. Fill in `CLIENT_ID` and `CLIENT_SECRET` in `config.yml`.
 
 ## Authentication
-1. At first run, run `python setup.py` and visit `http://127.0.0.1:7000` to complete Spotify auth.
+1. At first run, run `python setup.py` and visit `http://127.0.0.1:7000/auth` to complete Spotify auth.
 2. Music league parser uses your browser's cookie to workaround with sessions
 make sure you never click always allow when granting access to python.
 
