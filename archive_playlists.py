@@ -57,6 +57,9 @@ def archive_playlists():
             print(e)
             pass
 
+    checkpoints.sync()
+    checkpoints.close()
+
 
 if __name__ == '__main__':
     archive_playlists()

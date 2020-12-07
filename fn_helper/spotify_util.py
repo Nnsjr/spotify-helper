@@ -199,6 +199,7 @@ class SpotifyAuthClient:
                 self._refresh_access_token(auth_session)
             self.access_token = self.token['access_token']
         finally:
+            self.token.sync()
             self.token.close()
             delattr(self, 'token')
 

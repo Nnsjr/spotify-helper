@@ -12,7 +12,7 @@ class MLArchiveRecipe(BaseArchiveRecipe):
     target = {
         m['ml_handle']: id_from_uri(m['archive_uri'])
         for m in config["MEMBERS"] if 'ml_handle' in m}
-    target["all"] = config["ALL_POOL"]
+    target["all"] = id_from_uri(config["ALL_POOL"])
 
     def track_filter(self, track, source):
         return [track.submitted_by, "all"]
@@ -26,7 +26,7 @@ class SpotifyArchiveRecipe(BaseArchiveRecipe):
     target = {
         id_from_uri(m['uri']): id_from_uri(m['archive_uri'])
         for m in config["MEMBERS"]}
-    target["all"] = config["ALL_POOL"]
+    target["all"] = id_from_uri(config["ALL_POOL"])
 
     def track_filter(self, track, source):
         return [track.submitted_by, "all"]
