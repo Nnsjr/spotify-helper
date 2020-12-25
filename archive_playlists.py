@@ -1,6 +1,7 @@
-import click
 import shelve
 from itertools import chain
+
+import click
 
 from fn_helper import SpotifyClient
 from archives import all_recipes
@@ -25,22 +26,21 @@ def archive_playlists():
             recipe.source.move_to_checkpoint(checkpoint)
 
             results = {}
-            try:
-                while True:
+            while True:
+                try:
                     source = next(recipe.source)
-                    for track in source.tracks:
-                        result = recipe.track_filter(track, source)
-                        if not result:
-                            continue
+                except StopIteration:
+                    break
+                for track in source.tracks:
+                    result = recipe.track_filter(track, source)
+                    if not result:
+                        continue
 
-                        if not isinstance(result, list):
-                            result = [result]
-                        for tag in result:
-                            results.setdefault(
-                                tag, []).append(track.spotify_uri)
-
-            except StopIteration:
-                pass
+                    if not isinstance(result, list):
+                        result = [result]
+                    for tag in result:
+                        results.setdefault(
+                            tag, []).append(track.spotify_uri)
 
             if isinstance(recipe.target, dict):
                 for tag, track_uris in results.items():
