@@ -3,7 +3,7 @@ import click
 from archive_playlists import _archive_playlists
 from check_dup import _check_dup
 from round_result import _round_result
-from setup import setup
+from setup import setup as _setup
 from shuffle_playlist import _shuffle_playlist
 
 
@@ -35,6 +35,10 @@ def shuffle_playlist(playlist):
     _shuffle_playlist(playlist)
 
 
+@music_helper.command()
+def setup():
+    _setup()
+
+
 if __name__ == '__main__':
-    setup()
     music_helper()

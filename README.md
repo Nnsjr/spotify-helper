@@ -2,14 +2,11 @@
 
 ## Setup
 
-### Development
+### Development Environment
 1. `pip install pipenv`
 2. `pipenv shell`
 3. `pipenv sync`
 4. `cp config.yml.template config.yml`
-
-### Using 
-In case you don't have python 3.7 for pipenv you could always fallback using `python -r requirements.txt`
 
 ### App and config setup
 * For Music League helper please fill in Music League members manifest in `config.yml`
@@ -20,7 +17,7 @@ and create an app for yourself.
     3. Fill in `CLIENT_ID` and `CLIENT_SECRET` in `config.yml`.
 
 ## Authentication
-1. At first run, run `python setup.py` and visit `http://127.0.0.1:7000/auth` to complete Spotify auth.
+1. At first run, run `python music-helper.py setup` and visit `http://127.0.0.1:7000/auth` to complete Spotify auth.
 2. Music league parser uses your browser's cookie to workaround with sessions
 make sure you never click always allow when granting access to python.
 
@@ -29,21 +26,28 @@ make sure you never click always allow when granting access to python.
 ### Check Duplication
 Check whether a playlist have duplication against the pool.
 
-* `python check_dup.py --help`
-* `python check_dup.py {playlist_name}`
-* `python check_dup.py {playlist_uri}`
+* `python music_helper.py check-dup --help`
+* `python music_helper.py check-dup {playlist_name}`
+* `python music_helper.py check-dup {playlist_uri}`
 
 ### Archive 
 Archive spotify playlists with archive recipes in `arhives/`. For more info
 please reference the [Arhive Recipe](#arhive-recipe).
 
-* `python archive_playlists.py`
+* `python music_helper.py archive-playlists`
 
 
 ### Round Result
 Show round result by summing the votes.
 
-* `python round_result.py {music_league_round_url}`
+* `python music_helper.py round-result {music_league_round_url}`
+
+
+### Shuffle Playlist
+Shuffle a playlist you owned.
+
+* `python music_helper.py shuffle-playlist {playlist_name}`
+* `python music_helper.py shuffle-playlist {playlist_uri}`
 
 
 ## Archive Recipe
@@ -181,15 +185,3 @@ ml_client.parse_league(league_url)
 ```python
 ml_client.parse_round(round_url)
 ```
-
-
-## Usage (Deprecated)
-
-### Archive (Deprecated)
-Archive a spotify playlist or a music league round to each members archive and
-the pool as well.
-
-* `python archive_playlist.py {playlist_uri}`
-* `python archive_playlist.py {music_league_round_url}`
-
-
