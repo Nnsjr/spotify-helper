@@ -3,9 +3,7 @@ import click
 from fn_helper import config, MusicLeagueClient
 
 
-@click.command()
-@click.argument('round_url', nargs=1)
-def round_result(round_url):
+def _round_result(round_url):
     """ Shows the round result
     """
     members = config['MEMBERS']
@@ -19,6 +17,12 @@ def round_result(round_url):
 
     winner = ml_round_result.vote_count[0][0]
     print("WINNER: {}".format(nicknames[winner.lower()]))
+
+
+@click.command()
+@click.argument('round_url', nargs=1)
+def round_result(round_url):
+    _round_result(round_url)
 
 
 if __name__ == '__main__':

@@ -7,8 +7,7 @@ from fn_helper import SpotifyClient
 from archives import all_recipes
 
 
-@click.command()
-def archive_playlists():
+def _archive_playlists():
     spotify_client = SpotifyClient()
 
     checkpoints = shelve.open('archive_checkpoints.db', writeback=True)
@@ -59,6 +58,11 @@ def archive_playlists():
 
     checkpoints.sync()
     checkpoints.close()
+
+
+@click.command()
+def archive_playlists():
+    _archive_playlists()
 
 
 if __name__ == '__main__':

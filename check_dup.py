@@ -4,9 +4,7 @@ from fn_helper import config, SpotifyClient
 from fn_helper.util import id_from_uri
 
 
-@click.command()
-@click.argument('playlist', nargs=1)
-def check_dup(playlist):
+def _check_dup(playlist):
     """ Checks whether the playlist (matched by uri or name substr)
         has any tracks already in the pool.
     """
@@ -28,6 +26,12 @@ def check_dup(playlist):
     else:
         print("No duplicated tracks detected.")
     return dups
+
+
+@click.command()
+@click.argument('playlist', nargs=1)
+def check_dup(playlist):
+    _check_dup(playlist)
 
 
 if __name__ == '__main__':

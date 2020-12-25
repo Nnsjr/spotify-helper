@@ -4,9 +4,7 @@ import random
 from fn_helper import SpotifyClient
 
 
-@click.command()
-@click.argument('playlist', nargs=1)
-def shuffle_playlist(playlist):
+def _shuffle_playlist(playlist):
     """ Checks whether the playlist (matched by uri or name substr)
         has any tracks already in the pool.
     """
@@ -28,6 +26,12 @@ def shuffle_playlist(playlist):
         track_order = (
             track_order[:now_at] + [track_order[track_was_at]]
             + track_order[now_at:track_was_at] + track_order[track_was_at+1:])
+
+
+@click.command()
+@click.argument('playlist', nargs=1)
+def shuffle_playlist(playlist):
+    _shuffle_playlist(playlist)
 
 
 if __name__ == '__main__':
