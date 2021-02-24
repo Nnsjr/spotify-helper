@@ -130,11 +130,12 @@ class MusicLeagueClient:
         for track_dom in track_doms:
             song_info = track_dom.find(class_="song-info")
             img_url = track_dom.img['src']
-            name, artist, submitted_by = (
+            name, artist = (
                 self._extract_classes_string(
-                    song_info, "name", "artist", "submitter"))
+                    song_info, "name", "artist"))
             link = song_info.find(class_="name")['href']
-            submitted_by = remove_prefix(submitted_by, "submitted by ")
+            submitted_by = song_info.\
+                find(class_="submitter").contents[1].string
             artist = remove_prefix(artist, "by ")
 
             comment_doms = track_dom.find_all(class_="comment")
